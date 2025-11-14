@@ -7,9 +7,9 @@ import { kv } from "@vercel/kv";
 export async function GET() {
   try {
     const env = {
-      KV_URL: !!process.env.KV_URL,
-      KV_REST_API_URL: !!process.env.KV_REST_API_URL,
-      KV_REST_API_TOKEN: !!process.env.KV_REST_API_TOKEN,
+      f_KV_URL: !!process.env.KV_URL,
+      f_KV_REST_API_URL: !!process.env.f_KV_REST_API_URL,f_
+      f_KV_REST_API_TOKEN: !!process.env.f_KV_REST_API_TOKEN,
     };
 
     // usar una key nueva para no chocar con datos viejos
