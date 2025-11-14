@@ -1,5 +1,18 @@
 // lib/db.ts
-import { kv } from "@vercel/kv";
+import { kv, createClient } from "@vercel/kv";
+
+/** =====================================================
+ *  BASES DE DATOS
+ *  db1 = base original (usa KV_REST_API_URL)
+ *  db2 = segunda base (usa KV2_REST_API_URL)
+ * ===================================================== */
+
+export const db1 = kv;
+
+export const db2 = createClient({
+  url: process.env.f_KV_REST_API_URL!,
+  token: process.env.f_KV_REST_API_TOKEN!,
+});
 
 /** ====== Tipos ====== */
 export type Msg = {
@@ -40,10 +53,20 @@ function safeParse<T>(v: unknown): T | null {
   return null;
 }
 
+/** =====================================================
+ *  👇 CAMBIO IMPORTANTE
+ *  Elegís la BD que querés usar: db1 o db2
+ * ===================================================== */
+
+// 👉 ACA ELEGIS MANUALMENTE LA BD
+const db = db1;       // usa la base original
+// const db = db2;    // usa la base nueva (descomenta esta línea)
+
 /** ====== Contactos ====== */
 export async function upsertContact(waId: string, patch: Partial<Contact>) {
   const key = `contact:${waId}`;
-  const prev = (await kv.hgetall<Contact>(key)) || ({} as any);
+  const prev = (await db.hgetall<Contact>(key)) || ({} as any);
+
   const next: Contact = {
     wa_id: waId,
     lastMessageAt: prev.lastMessageAt ?? 0,
@@ -51,8 +74,10 @@ export async function upsertContact(waId: string, patch: Partial<Contact>) {
     ...prev,
     ...patch,
   };
-  await kv.hset(key, next as any);
-  await kv.zadd("idx:contacts", { score: next.lastMessageAt || 0, member: waId });
+
+  await db.hset(key, next as any);
+  await db.zadd("idx:contacts", { score: next.lastMessageAt || 0, member: waId });
+
   return next;
 }
 
@@ -66,11 +91,11 @@ export async function saveMessage(
   const waId = normalizeId(rawId);
 
   if (dedupeId) {
-    const added = await kv.sadd("dedupe:msg", dedupeId);
+    const added = await db.sadd("dedupe:msg", dedupeId);
     if (!added) return;
   }
 
-  await kv.lpush(`messages:${waId}`, JSON.stringify(msg));
+  await db.lpush(`messages:${waId}`, JSON.stringify(msg));
 
   const base: Partial<Contact> = {
     wa_id: waId,
@@ -92,7 +117,7 @@ export async function listContacts(
   cursor = 0,
   limit = 30
 ): Promise<{ contacts: Contact[]; nextCursor: number | null }> {
-  const members = await kv.zrange(
+  const members = await db.zrange(
     "idx:contacts",
     cursor,
     cursor + limit - 1,
@@ -101,7 +126,7 @@ export async function listContacts(
 
   const out: Contact[] = [];
   for (const waId of members as string[]) {
-    const c = await kv.hgetall<Contact>(`contact:${waId}`);
+    const c = await db.hgetall<Contact>(`contact:${waId}`);
     if (c) out.push(c);
   }
 
@@ -110,7 +135,6 @@ export async function listContacts(
 }
 
 /**
- * ⬇️ AQUÍ EL CAMBIO IMPORTANTE
  * si limit es null → traer TODO el historial
  */
 export async function getConversation(
@@ -121,10 +145,9 @@ export async function getConversation(
   let raw: unknown[];
 
   if (limit === null) {
-    // todo
-    raw = await kv.lrange<unknown>(`messages:${waId}`, 0, -1);
+    raw = await db.lrange<unknown>(`messages:${waId}`, 0, -1);
   } else {
-    raw = await kv.lrange<unknown>(`messages:${waId}`, offset, offset + limit - 1);
+    raw = await db.lrange<unknown>(`messages:${waId}`, offset, offset + limit - 1);
   }
 
   const parsed: Msg[] = [];
@@ -135,15 +158,12 @@ export async function getConversation(
 
   parsed.sort((a, b) => a.timestamp - b.timestamp);
 
-  // si pedimos todo no hay next
   const nextOffset =
     limit === null
       ? null
-      : (() => {
-          // mismo cálculo que antes
-          // (esto es para compatibilidad si alguien sigue paginando)
-          return parsed.length < limit ? null : offset + limit;
-        })();
+      : parsed.length < limit
+        ? null
+        : offset + limit;
 
   return { messages: parsed, nextOffset };
 }
@@ -154,12 +174,10 @@ export async function getContactWithMessages(
   limit: number | null = 50,
   inboxId?: string
 ) {
-  const c = await kv.hgetall<Contact>(`contact:${waId}`);
+  const c = await db.hgetall<Contact>(`contact:${waId}`);
   if (!c) return null;
 
   const { messages, nextOffset } = await getConversation(waId, offset, limit);
   const filtered = inboxId ? messages.filter((m) => m.inbox_id === inboxId) : messages;
   return { contact: c, messages: filtered, nextOffset };
 }
-
-
