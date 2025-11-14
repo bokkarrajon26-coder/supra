@@ -7,9 +7,9 @@ import { kv, createClient } from "@vercel/kv";
  *  db2 = segunda base (usa KV2_REST_API_URL)
  * ===================================================== */
 
-export const db1 = kv;
+export const db2 = kv;
 
-export const db2 = createClient({
+export const db1 = createClient({
   url: process.env.f_KV_REST_API_URL!,
   token: process.env.f_KV_REST_API_TOKEN!,
 });
