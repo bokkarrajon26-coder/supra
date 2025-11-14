@@ -3,8 +3,13 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
+import { db1, db2 } from "@/lib/db";
 import crypto from "crypto";
+
+/* ─────────── elegir base de datos ─────────── */
+// 👇 elegí con cuál querés trabajar
+const db = db1; 
+// const db = db2;
 
 /* ─────────── utils ─────────── */
 const norm = (s: string) => String(s || "").replace(/[^\d]/g, "");
@@ -27,7 +32,7 @@ function uuid() {
 /** Busca ctwa_clid/clid en contact:{waId} o en los últimos mensajes */
 async function resolveClid(waId: string) {
   const id = norm(waId);
-  const contact = await kv.hgetall<Record<string, any>>(`contact:${id}`).catch(() => null);
+  const contact = await db.hgetall<Record<string, any>>(`contact:${id}`).catch(() => null);
 
   let clid =
     contact?.ctwa_clid ??
@@ -36,7 +41,7 @@ async function resolveClid(waId: string) {
     null;
 
   if (!clid) {
-    const raw = await kv.lrange<string>(`messages:${id}`, 0, 10);
+    const raw = await db.lrange<string>(`messages:${id}`, 0, 10);
     for (const r of raw) {
       let m: any; try { m = JSON.parse(r); } catch { continue; }
       clid =
@@ -116,12 +121,13 @@ export async function POST(req: NextRequest, context: any) {
     };
 
     const listKey = `purchases:${waId}`;
-    await kv.lpush(listKey, JSON.stringify(purchase));
+    await db.lpush(listKey, JSON.stringify(purchase));
 
     // Obtener customer_code del contacto
-    const contact = await kv.hgetall<Record<string, any>>(`contact:${waId}`).catch(() => null);
+    const contact = await db.hgetall<Record<string, any>>(`contact:${waId}`).catch(() => null);
     const customerCode = contact?.customer_code;
     const contactName = contact?.name;
+
     // Enviar webhook a Zapier (no bloqueante)
     notifyZapier(purchase, customerCode, contactName);
 
@@ -142,13 +148,13 @@ export async function POST(req: NextRequest, context: any) {
         purchase.capiLastError = null;
         (purchase as any).capiResult = rtn;
         (purchase as any).ctwa_clid = clid || null;
-        await kv.lset(listKey, 0, JSON.stringify(purchase)).catch(() => {});
+        await db.lset(listKey, 0, JSON.stringify(purchase)).catch(() => {});
       })
       .catch(async (err) => {
         purchase.capiStatus = "error";
         purchase.capiLastError = String(err?.message ?? err);
         (purchase as any).ctwa_clid = clid || null;
-        await kv.lset(listKey, 0, JSON.stringify(purchase)).catch(() => {});
+        await db.lset(listKey, 0, JSON.stringify(purchase)).catch(() => {});
         console.error("CAPI error:", err);
       });
     */
@@ -164,7 +170,7 @@ export async function POST(req: NextRequest, context: any) {
 async function notifyZapier(purchase: Purchase, customerCode?: string, contactName?: string) {
   const webhookUrl = process.env.ZAPIER_WEBHOOK_URL;
   if (!webhookUrl) {
-    console.warn("ZAPIER_PURCHASE_WEBHOOK_URL is not defined");
+    console.warn("ZAPIER_WEBHOOK_URL is not defined");
     return;
   }
 
