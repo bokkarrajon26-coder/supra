@@ -1,12 +1,15 @@
 // app/api/webhook/twilio/route.ts
 import { NextResponse } from "next/server";
-import { saveMessage, normalizeId } from "@/lib/db";
-import { kv } from "@vercel/kv";
+import { saveMessage, normalizeId, db1, db2 } from "@/lib/db";
 import crypto from "crypto";
 import { INBOX_NUMBERS } from "@/lib/constants";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// 👇 ELEGÍ ACÁ QUÉ BASE USAR
+const db = db1; // usa la base principal
+// const db = db2; // si querés que este webhook escriba en la segunda base
 
 const pick = (v: any) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
@@ -73,7 +76,8 @@ export async function POST(req: Request) {
   const sourceTypeRef = pick(p.get("ReferralSourceType"));
   const clid = resolveClidFromParams(p);
 
-  const existing = await kv
+  // 👇 AHORA USA db EN VEZ DE kv
+  const existing = await db
     .hgetall<Record<string, any>>(`contact:${waId}`)
     .catch(() => null);
   const wasAd = existing?.source_type === "ad" || !!existing?.ctwa_clid;
@@ -111,72 +115,70 @@ export async function POST(req: Request) {
   let uploadedMediaType: "image" | "pdf" | null = null;
 
   if (mediaUrl && mediaContentType) {
-  try {
-    const TWILIO_CREDS: Record<string, { sid?: string | null; token?: string | null }> = {
-      ventas: {
-        sid: process.env.TWILIO_ACCOUNT_SID_VENTAS,
-        token: process.env.TWILIO_AUTH_TOKEN_VENTAS,
-      },
-      soporte: {
-        sid: process.env.TWILIO_ACCOUNT_SID_SOPORTE,
-        token: process.env.TWILIO_AUTH_TOKEN_SOPORTE,
-      },
-    };
-
-    const creds = TWILIO_CREDS[inbox_id];
-    if (!creds?.sid || !creds?.token) {
-      throw new Error(`No Twilio credentials for inbox: ${inbox_id}`);
-    }
-
-    // 1️⃣ Descargar el archivo real desde Twilio
-    const auth = "Basic " + Buffer.from(`${creds.sid}:${creds.token}`).toString("base64");
-    const twilioRes = await fetch(mediaUrl, { headers: { Authorization: auth } });
-
-    if (!twilioRes.ok) throw new Error(`Twilio returned ${twilioRes.status}`);
-    const arrayBuffer = await twilioRes.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const isPdf = mediaContentType.toLowerCase().includes("pdf");
-    const { v2: cloudinary } = await import("cloudinary");
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-      api_key: process.env.CLOUDINARY_API_KEY!,
-      api_secret: process.env.CLOUDINARY_API_SECRET!,
-      secure: true,
-    });
-
-    // 2️⃣ Subir a Cloudinary usando el tipo correcto
-    const uploadResult: any = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: "whatsapp",
-          resource_type: isPdf ? "raw" : "image",
-          public_id: crypto.randomUUID(),
-          use_filename: false,
-          unique_filename: true,
-          format: isPdf ? "pdf" : undefined, // 🔥 fuerza PDF explícito
+    try {
+      const TWILIO_CREDS: Record<string, { sid?: string | null; token?: string | null }> = {
+        ventas: {
+          sid: process.env.TWILIO_ACCOUNT_SID_VENTAS,
+          token: process.env.TWILIO_AUTH_TOKEN_VENTAS,
         },
-        (error, result) => {
-          if (error) return reject(error);
-          resolve(result);
-        }
-      );
-      stream.end(buffer);
-    });
+        soporte: {
+          sid: process.env.TWILIO_ACCOUNT_SID_SOPORTE,
+          token: process.env.TWILIO_AUTH_TOKEN_SOPORTE,
+        },
+      };
 
-    if (!uploadResult?.secure_url) throw new Error("Cloudinary failed to return secure_url");
+      const creds = TWILIO_CREDS[inbox_id];
+      if (!creds?.sid || !creds?.token) {
+        throw new Error(`No Twilio credentials for inbox: ${inbox_id}`);
+      }
 
-    uploadedMediaUrl = uploadResult.secure_url;
-    uploadedMediaType = isPdf ? "pdf" : "image";
-    console.log("✅ Subido a Cloudinary:", uploadedMediaUrl);
-  } catch (err) {
-    console.error("❌ Error subiendo media autenticada:", err);
-    uploadedMediaUrl = mediaUrl; // fallback Twilio URL
-    uploadedMediaType = mediaContentType.includes("pdf") ? "pdf" : "image";
+      // 1️⃣ Descargar el archivo real desde Twilio
+      const auth = "Basic " + Buffer.from(`${creds.sid}:${creds.token}`).toString("base64");
+      const twilioRes = await fetch(mediaUrl, { headers: { Authorization: auth } });
+
+      if (!twilioRes.ok) throw new Error(`Twilio returned ${twilioRes.status}`);
+      const arrayBuffer = await twilioRes.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const isPdf = mediaContentType.toLowerCase().includes("pdf");
+      const { v2: cloudinary } = await import("cloudinary");
+      cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+        api_key: process.env.CLOUDINARY_API_KEY!,
+        api_secret: process.env.CLOUDINARY_API_SECRET!,
+        secure: true,
+      });
+
+      // 2️⃣ Subir a Cloudinary usando el tipo correcto
+      const uploadResult: any = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "whatsapp",
+            resource_type: isPdf ? "raw" : "image",
+            public_id: crypto.randomUUID(),
+            use_filename: false,
+            unique_filename: true,
+            format: isPdf ? "pdf" : undefined,
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        stream.end(buffer);
+      });
+
+      if (!uploadResult?.secure_url) throw new Error("Cloudinary failed to return secure_url");
+
+      uploadedMediaUrl = uploadResult.secure_url;
+      uploadedMediaType = isPdf ? "pdf" : "image";
+      console.log("✅ Subido a Cloudinary:", uploadedMediaUrl);
+    } catch (err) {
+      console.error("❌ Error subiendo media autenticada:", err);
+      uploadedMediaUrl = mediaUrl; // fallback Twilio URL
+      uploadedMediaType = mediaContentType.includes("pdf") ? "pdf" : "image";
+    }
   }
-}
-
-
 
   // mensaje final
   const msg = {
@@ -224,7 +226,7 @@ export async function POST(req: Request) {
 
   // meta extra
   try {
-    await kv.hset(`message_meta:${msg.id}`, {
+    await db.hset(`message_meta:${msg.id}`, {
       ctwa_clid: clid || "",
       source_type: clid
         ? "ad"
@@ -234,7 +236,9 @@ export async function POST(req: Request) {
       adset_id: adset_id || "",
       ad_id: ad_id || "",
     });
-  } catch {}
+  } catch (err) {
+    console.error("Error guardando message_meta:", err);
+  }
 
   return new Response(null, { status: 204 });
 }
