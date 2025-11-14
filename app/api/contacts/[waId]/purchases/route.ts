@@ -3,7 +3,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
+import { db1, db2 } from "@/lib/db";
+
+/* ─────────── elegir base de datos ─────────── */
+// Usá la misma que en purchases y webhook de Twilio
+const db = db1; 
+// const db = db2;
 
 /* ─────────── helpers ─────────── */
 const CORS_HEADERS = {
@@ -38,7 +43,7 @@ export async function GET(_req: NextRequest, context: any) {
   }
 
   const listKey = `purchases:${waId}`;
-  const raw = await kv.lrange<string>(listKey, 0, 50).catch(() => []);
+  const raw = await db.lrange<string>(listKey, 0, 50).catch(() => []); // 👈 db en vez de kv
   let errors = 0;
 
   // parse robusto: acepta string JSON o ya-objeto; si falla, conserva _raw
@@ -54,7 +59,7 @@ export async function GET(_req: NextRequest, context: any) {
     }
   });
 
-  const len = await kv.llen(listKey).catch(() => 0);
+  const len = await db.llen(listKey).catch(() => 0); // 👈 db en vez de kv
 
   // Devolvemos una muestra de los primeros 2 tal cual están en KV para ver formato real
   const debug = {
