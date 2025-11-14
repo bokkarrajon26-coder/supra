@@ -1,9 +1,13 @@
 // app/api/webhook/zapier/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
+import { db1, db2 } from "@/lib/db"; // 👈 usar tu BBDD real
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// 👇 ELEGÍ AQUÍ QUÉ BASE USAR
+const db = db1;  
+// const db = db2;
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,11 +19,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Buscar contacto con ese customer_code
-    const keys = await kv.keys("contact:*");
-    let matchKey = null;
+    const keys = await db.keys("contact:*");   // 👈 ahora usa la base correcta
+    let matchKey: string | null = null;
 
     for (const key of keys) {
-      const data = await kv.hgetall<Record<string, any>>(key);
+      const data = await db.hgetall<Record<string, any>>(key);  // 👈 también acá
       if (data?.customer_code?.toUpperCase() === code) {
         matchKey = key;
         break;
@@ -31,7 +35,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Guardar la etiqueta "Tracked"
-    await kv.hset(matchKey, { tag: "Tracked" });
+    await db.hset(matchKey, { tag: "Tracked" }); // 👈 y acá
 
     return NextResponse.json({ ok: true, contact: matchKey });
   } catch (err) {
