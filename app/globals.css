@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+/* ==== Scrollbar oscuro SOLO cuando agregás .scrollbar-dark ==== */
+
+/* Firefox */
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120,120,120,.45) transparent;
+}
+
+/* WebKit (Chrome/Edge/Opera/Safari desktop) */
+.scrollbar-dark::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background: rgba(120,120,120,.35);
+  border-radius: 8px;
+  border: 2px solid transparent; /* genera “espacio” alrededor */
+  background-clip: padding-box;
+}
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(150,150,150,.55);
+}
+
+/* app/globals.css */
+
+/* ...lo que ya tengas... */
+
+.wave {
+  position: absolute;
+  inset: auto 0 0 0;
+  margin: 0 auto;
+  width: 110%;
+  height: 180px;
+  background: radial-gradient(circle at 10% 20%, rgba(216, 143, 255, 0.42) 0%, rgba(11, 2, 22, 0) 60%);
+  filter: drop-shadow(0 0 20px rgba(207, 141, 255, 0.7));
+  clip-path: path(
+    "M0,120 C120,80 200,160 350,120 C500,80 560,140 700,110 C840,80 920,140 1000,100 L1000,200 L0,200 Z"
+  );
+  opacity: 0.45;
+}
+
+.wave1 {
+  animation: waveMove 10s ease-in-out infinite alternate;
+}
+.wave2 {
+  opacity: 0.35;
+  transform: translateY(20px);
+  animation: waveMove 12s ease-in-out infinite alternate-reverse;
+}
+.wave3 {
+  opacity: 0.2;
+  transform: translateY(40px);
+  animation: waveMove 14s ease-in-out infinite;
+}
+
+@keyframes waveMove {
+  0% {
+    transform: translateX(-30px) translateY(0);
+  }
+  100% {
+    transform: translateX(30px) translateY(0);
+  }
+}
+
+/* pulso del botón */
+@keyframes pulse-slow {
+  0% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 3.5s ease-in-out infinite;
+}
+
+
+/* Importante: no declarar ::-webkit-scrollbar global (sin clase). */
