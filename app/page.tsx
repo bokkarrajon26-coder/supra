@@ -232,17 +232,19 @@ export default function Page() {
     return () => clearInterval(t);
   }, [selected, inboxId]);
 
-  // Última compra
-  useEffect(() => {
+   useEffect(() => {
     let abort = false;
+  
     async function loadLastPurchase() {
       if (!selected) {
         setLastPurchase(null);
         return;
       }
+  
       try {
         const r = await fetch(`/api/contacts/${selected}/purchases`, { cache: "no-store" });
         const j = await r.json().catch(() => ({}));
+  
         if (!abort && j?.ok && Array.isArray(j.purchases) && j.purchases.length) {
           const p = j.purchases[0];
           const ui: PurchaseUI = {
@@ -251,20 +253,37 @@ export default function Page() {
             currency: String(p.currency ?? "ARS"),
             ts: p.createdAt ? Date.parse(p.createdAt) : Number(p.ts ?? Date.now()),
           };
+  
           setLastPurchase(ui);
+  
+          // 👇 NUEVO: marcar también en el mapa de hasBuy
+          setHasBuy(prev => ({
+            ...prev,
+            [selected]: true,   // selected ya es waId normalizado
+          }));
         } else if (!abort) {
           setLastPurchase(null);
+  
+          // 👇 Si NO tiene compras, aseguramos que figure como false
+          setHasBuy(prev => ({
+            ...prev,
+            [selected]: false,
+          }));
         }
       } catch {
-        if (!abort) setLastPurchase(null);
+        if (!abort) {
+          setLastPurchase(null);
+        }
       }
     }
+  
     loadLastPurchase();
     return () => {
       abort = true;
     };
   }, [selected]);
 
+  
   async function send() {
     if (!selected) return;
     if (!text.trim() && !mediaUrl) return;
