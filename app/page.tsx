@@ -361,7 +361,7 @@ export default function Page() {
             </div>
             <div className="px-2 py-1 rounded-lg bg-neutral-900 border border-neutral-800 flex flex-col leading-tight">
               <span className="text-[10px] text-neutral-400 uppercase tracking-wide">
-                Conversion a carga
+                Conversion
               </span>
               <span className="text-xs font-semibold">{conversion}%</span>
             </div>
@@ -444,7 +444,7 @@ export default function Page() {
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           <div className="flex gap-1">
-                            {hasPurchase && <Tag color="green">Cargó</Tag>}
+                            {hasPurchase && <Tag color="green">Lead</Tag>}
                             {c.source_type === "ad" && <Tag color="blue">Ad</Tag>}
                           </div>
                           {c.customer_code && (
@@ -487,7 +487,7 @@ export default function Page() {
                       {selectedContact?.tag === "Tracked" && (
                         <Tag color="green">Tracked</Tag>
                       )}
-                      {hasBuy[selected] && <Tag color="green">Cargó</Tag>}
+                      {hasBuy[selected] && <Tag color="green">Lead</Tag>}
                     </div>
 
                     {selectedContact && (
