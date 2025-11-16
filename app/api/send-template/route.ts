@@ -10,23 +10,35 @@ const TWILIO_ACCOUNTS: Record<
   string,
   { sid: string; token: string; numberVentas: string; numberSoporte: string }
 > = {
-  main: {
-    sid: process.env.TWILIO_ACCOUNT_SID_MAIN || "",
-    token: process.env.TWILIO_AUTH_TOKEN_MAIN || "",
-    numberVentas: process.env.TWILIO_NUMBER_VENTAS_MAIN || "",
-    numberSoporte: process.env.TWILIO_NUMBER_SOPORTE_MAIN || "",
+  difusionA: {
+    sid: process.env.TWILIO_ACCOUNT_SID_DIFUSION_A || "",
+    token: process.env.TWILIO_AUTH_TOKEN_DIFUSION_A || "",
+    numberVentas: process.env.TWILIO_NUMBER_VENTAS_DIFUSION_A || "",
+    numberSoporte: process.env.TWILIO_NUMBER_SOPORTE_DIFUSION_A || "",
   },
-  tribet: {
-    sid: process.env.TWILIO_ACCOUNT_SID_TRIBET || "",
-    token: process.env.TWILIO_AUTH_TOKEN_TRIBET || "",
-    numberVentas: process.env.TWILIO_NUMBER_VENTAS_TRIBET || "",
-    numberSoporte: process.env.TWILIO_NUMBER_SOPORTE_TRIBET || "",
+  difusionB: {
+    sid: process.env.TWILIO_ACCOUNT_SID_DIFUSION_B || "",
+    token: process.env.TWILIO_AUTH_TOKEN_DIFUSION_B || "",
+    numberVentas: process.env.TWILIO_NUMBER_VENTAS_DIFUSION_B || "",
+    numberSoporte: process.env.TWILIO_NUMBER_SOPORTE_DIFUSION_B || "",
   },
-  casinoX: {
-    sid: process.env.TWILIO_ACCOUNT_SID_CASINOX || "",
-    token: process.env.TWILIO_AUTH_TOKEN_CASINOX || "",
-    numberVentas: process.env.TWILIO_NUMBER_VENTAS_CASINOX || "",
-    numberSoporte: process.env.TWILIO_NUMBER_SOPORTE_CASINOX || "",
+  difusionC: {
+    sid: process.env.TWILIO_ACCOUNT_SID_DIFUSION_C || "",
+    token: process.env.TWILIO_AUTH_TOKEN_DIFUSION_C || "",
+    numberVentas: process.env.TWILIO_NUMBER_VENTAS_DIFUSION_C || "",
+    numberSoporte: process.env.TWILIO_NUMBER_SOPORTE_DIFUSION_C || "",
+  },
+  difusionD: {
+    sid: process.env.TWILIO_ACCOUNT_SID_DIFUSION_D || "",
+    token: process.env.TWILIO_AUTH_TOKEN_DIFUSION_D || "",
+    numberVentas: process.env.TWILIO_NUMBER_VENTAS_DIFUSION_D || "",
+    numberSoporte: process.env.TWILIO_NUMBER_SOPORTE_DIFUSION_D || "",
+  },
+  difusionE: {
+    sid: process.env.TWILIO_ACCOUNT_SID_DIFUSION_E || "",
+    token: process.env.TWILIO_AUTH_TOKEN_DIFUSION_E || "",
+    numberVentas: process.env.TWILIO_NUMBER_VENTAS_DIFUSION_E || "",
+    numberSoporte: process.env.TWILIO_NUMBER_SOPORTE_DIFUSION_E || "",
   },
 };
 
@@ -39,7 +51,7 @@ export async function POST(req: NextRequest) {
       inbox_id,
       content_sid,
       variables,
-      accountKey = "main",
+      accountKey = "difusionA",
     } = body;
 
     if (!Array.isArray(toNumbers) || toNumbers.length === 0) {
@@ -56,7 +68,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const config = TWILIO_ACCOUNTS[accountKey] || TWILIO_ACCOUNTS["main"];
+    const config = TWILIO_ACCOUNTS[accountKey] || TWILIO_ACCOUNTS["difusionA"];
 
     if (!config?.sid || !config?.token) {
       return NextResponse.json(
