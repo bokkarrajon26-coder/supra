@@ -344,9 +344,9 @@ export default function Page() {
             CRM
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-semibold tracking-wide">Ignite</span>
+            <span className="text-sm font-semibold tracking-wide">SUPRA</span>
             <span className="text-[11px] text-neutral-400">
-              Panel en tiempo real · WhatsApp & Cargas
+              INBOX en tiempo real · WhatsApp & Leads
             </span>
           </div>
         </div>
