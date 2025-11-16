@@ -21,7 +21,7 @@ export default function TemplatesBulkPage() {
   const [sending, setSending] = useState(false);
   const [results, setResults] = useState<SendResult[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [accountKey, setAccountKey] = useState("main");
+  const [accountKey, setAccountKey] = useState("difusionA");
   // numeros
   const [rawNumbers, setRawNumbers] = useState("");
   const [numbers, setNumbers] = useState<string[]>([]);
@@ -203,22 +203,23 @@ export default function TemplatesBulkPage() {
               />
             </div>
           
-            <div className="flex-1">
-              <label className="block text-sm mb-1">Cuenta de Twilio</label>
-              <select
-                className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm"
-                value={accountKey}
-                onChange={(e) => setAccountKey(e.target.value)}
-              >
-                <option value="main">Cuenta principal</option>
-                <option value="tribet">Tribet</option>
-                <option value="casinoX">Casino X</option>
-                {/* agregas más cuentas según tu .env */}
-              </select>
-              <p className="text-[11px] opacity-60 mt-1">
-                El SID y el Token reales se configuran en el backend (.env) para cada cuenta.
-              </p>
-            </div>
+           <div className="flex-1">
+            <label className="block text-sm mb-1">Cuenta de Twilio / Difusión</label>
+            <select
+              className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm"
+              value={accountKey}
+              onChange={(e) => setAccountKey(e.target.value)}
+            >
+              <option value="difusionA">Difusión A</option>
+              <option value="difusionB">Difusión B</option>
+              <option value="difusionC">Difusión C</option>
+              <option value="difusionD">Difusión D</option>
+              <option value="difusionE">Difusión E</option>
+            </select>
+            <p className="text-[11px] opacity-60 mt-1">
+              El SID y el Token se configuran en el backend. Acá solo elegís desde qué
+              cuenta lanzar la campaña.
+            </p>
           </div>
 
           {/* Variables */}
