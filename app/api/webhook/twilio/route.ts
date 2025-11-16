@@ -13,6 +13,8 @@ const db = db1; // usa la base principal
 
 const pick = (v: any) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
+
+
 const resolveClidFromParams = (p: URLSearchParams) =>
   pick(
     p.get("ReferralCtwaClid") ||
@@ -21,6 +23,27 @@ const resolveClidFromParams = (p: URLSearchParams) =>
       p.get("ctw_clid") ||
       p.get("clid")
   );
+
+function extractCustomerCode(body: string): string | null {
+  if (!body) return null;
+
+  const upper = body.toUpperCase();
+
+  // Español: "código de bonus es: XXXXXXXX"
+  const es = upper.match(/CÓDIGO DE BONUS\s*ES[:\s]*([A-Z0-9]{8})/);
+  if (es?.[1]) return es[1];
+
+  // Inglés: "My code is: XXXXXXXX"
+  const en = upper.match(/MY CODE IS[:\s]*([A-Z0-9]{8})/);
+  if (en?.[1]) return en[1];
+
+  // Fallback: cualquier palabra suelta de 8 caracteres A-Z0-9
+  const any = upper.match(/\b([A-Z0-9]{8})\b/);
+  if (any?.[1]) return any[1];
+
+  return null;
+}
+
 
 function parseAdIdsFromReferral(urlStr?: string | null) {
   const out = {
@@ -47,7 +70,7 @@ export async function POST(req: Request) {
   const from = p.get("From") || "";
   const to = p.get("To") || "";
   const body = p.get("Body") || "";
-
+  const customerCode = extractCustomerCode(body);
   // 1) detectar inbox por el número que recibió
   let inbox_id = "ventas";
   for (const [key, num] of Object.entries(INBOX_NUMBERS)) {
@@ -83,7 +106,7 @@ export async function POST(req: Request) {
   const wasAd = existing?.source_type === "ad" || !!existing?.ctwa_clid;
 
   // contacto
-  const contactPatch: Record<string, any> = {
+   const contactPatch: Record<string, any> = {
     wa_id: waId,
     lastText: body || (mediaUrl ? "[media]" : ""),
     lastMessageAt: Date.now(),
@@ -96,9 +119,9 @@ export async function POST(req: Request) {
   if (adset_id) contactPatch.adset_id = adset_id;
   if (ad_id) contactPatch.ad_id = ad_id;
 
-  const bonusMatch = body.match(/código de bonus\s*es[:\s]*([A-Z0-9]{8})/i);
-  if (bonusMatch?.[1]) {
-    contactPatch.customer_code = bonusMatch[1].toUpperCase();
+  // 👇 NUEVO: si encontramos código, lo guardamos
+  if (customerCode) {
+    contactPatch.customer_code = customerCode;
   }
 
   if (clid) {
