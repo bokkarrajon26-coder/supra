@@ -10,8 +10,8 @@ import { kv, createClient } from "@vercel/kv";
 export const db2 = kv;
 
 export const db1 = createClient({
-  url: process.env.f_KV_REST_API_URL!,
-  token: process.env.f_KV_REST_API_TOKEN!,
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
 });
 
 /** ====== Tipos ====== */
