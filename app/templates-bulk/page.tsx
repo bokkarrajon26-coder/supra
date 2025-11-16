@@ -21,7 +21,7 @@ export default function TemplatesBulkPage() {
   const [sending, setSending] = useState(false);
   const [results, setResults] = useState<SendResult[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-
+  const [accountKey, setAccountKey] = useState("main");
   // numeros
   const [rawNumbers, setRawNumbers] = useState("");
   const [numbers, setNumbers] = useState<string[]>([]);
@@ -95,6 +95,8 @@ export default function TemplatesBulkPage() {
       variables: {
         "1": var1,
         "2": var2,
+        accountKey, // 👈 clave de cuenta Twilio
+        
       },
     };
 
@@ -175,7 +177,7 @@ export default function TemplatesBulkPage() {
             )}
           </div>
 
-          {/* Inbox & Content SID */}
+          {/* Inbox & Content SID & Cuenta Twilio */}
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <label className="block text-sm mb-1">Inbox / línea</label>
@@ -190,6 +192,7 @@ export default function TemplatesBulkPage() {
                 <option value="soporte">🛠 Soporte</option>
               </select>
             </div>
+          
             <div className="flex-1">
               <label className="block text-sm mb-1">Content SID (template)</label>
               <input
@@ -198,6 +201,23 @@ export default function TemplatesBulkPage() {
                 value={contentSid}
                 onChange={(e) => setContentSid(e.target.value)}
               />
+            </div>
+          
+            <div className="flex-1">
+              <label className="block text-sm mb-1">Cuenta de Twilio</label>
+              <select
+                className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm"
+                value={accountKey}
+                onChange={(e) => setAccountKey(e.target.value)}
+              >
+                <option value="main">Cuenta principal</option>
+                <option value="tribet">Tribet</option>
+                <option value="casinoX">Casino X</option>
+                {/* agregas más cuentas según tu .env */}
+              </select>
+              <p className="text-[11px] opacity-60 mt-1">
+                El SID y el Token reales se configuran en el backend (.env) para cada cuenta.
+              </p>
             </div>
           </div>
 
