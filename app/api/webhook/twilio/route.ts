@@ -218,32 +218,36 @@ export async function POST(req: Request) {
 
   await saveMessage(waId, msg, contactPatch, messageSid);
 
-  // webhook zapier si había contacto
-  if (existing) {
-    const zapierWebhookUrl = process.env.ZAPIER_WEBHOOK_URL;
-    if (zapierWebhookUrl) {
-      try {
-        await fetch(zapierWebhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            wa_id: waId,
-            name: profileName || null,
-            from,
-            to,
-            message: body,
-            timestamp: Date.now(),
-            source_type: contactPatch.source_type || null,
-            source_url: sourceUrl || null,
-            campaign_id: campaign_id || null,
-            adset_id: adset_id || null,
-            ad_id: ad_id || null,
-            ctwa_clid: clid || null,
-          }),
-        });
-      } catch (err) {
-        console.error("Error al enviar webhook a Zapier:", err);
-      }
+   // webhook zapier (mandamos también el customer_code)
+  const zapierWebhookUrl = process.env.ZAPIER_WEBHOOK_URL;
+  const finalCustomerCode =
+    contactPatch.customer_code || existing?.customer_code || null;
+
+  // Solo disparamos si hay contacto previo O si vino un customer_code nuevo
+  if (zapierWebhookUrl && (existing || finalCustomerCode)) {
+    try {
+      await fetch(zapierWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wa_id: waId,
+          name: profileName || null,
+          from,
+          to,
+          message: body,
+          timestamp: Date.now(),
+          source_type: contactPatch.source_type || null,
+          source_url: sourceUrl || null,
+          campaign_id: campaign_id || null,
+          adset_id: adset_id || null,
+          ad_id: ad_id || null,
+          ctwa_clid: clid || null,
+          customer_code: finalCustomerCode,
+          inbox_id,
+        }),
+      });
+    } catch (err) {
+      console.error("Error al enviar webhook a Zapier:", err);
     }
   }
 
