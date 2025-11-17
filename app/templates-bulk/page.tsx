@@ -95,10 +95,10 @@ export default function TemplatesBulkPage() {
       variables: {
         "1": var1,
         "2": var2,
-        accountKey, // 👈 clave de cuenta Twilio
-        
       },
+      accountKey,                  // 👈 ahora va al nivel raíz del body
     };
+
 
     setSending(true);
     try {
@@ -177,31 +177,51 @@ export default function TemplatesBulkPage() {
             )}
           </div>
 
-          {/* Inbox & Content SID & Cuenta Twilio */}
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <label className="block text-sm mb-1">Inbox / línea</label>
-              <select
-                className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm"
-                value={inboxId}
-                onChange={(e) =>
-                  setInboxId(e.target.value as "ventas" | "soporte")
-                }
-              >
-                <option value="ventas">📞 Ventas</option>
-                <option value="soporte">🛠 Soporte</option>
-              </select>
-            </div>
-          
-            <div className="flex-1">
-              <label className="block text-sm mb-1">Content SID (template)</label>
-              <input
-                className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm"
-                placeholder="HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                value={contentSid}
-                onChange={(e) => setContentSid(e.target.value)}
-              />
-            </div>
+            {/* Inbox & Content SID & Cuenta Twilio */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block text-sm mb-1">Inbox / línea</label>
+                <select
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm"
+                  value={inboxId}
+                  onChange={(e) =>
+                    setInboxId(e.target.value as "ventas" | "soporte")
+                  }
+                >
+                  <option value="ventas">📞 Ventas</option>
+                  <option value="soporte">🛠 Soporte</option>
+                </select>
+              </div>
+            
+              <div className="flex-1">
+                <label className="block text-sm mb-1">Content SID (template)</label>
+                <input
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm"
+                  placeholder="HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={contentSid}
+                  onChange={(e) => setContentSid(e.target.value)}
+                />
+              </div>
+            
+              <div className="flex-1">
+                <label className="block text-sm mb-1">Cuenta de Twilio / Difusión</label>
+                <select
+                  className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-2 text-sm"
+                  value={accountKey}
+                  onChange={(e) => setAccountKey(e.target.value)}
+                >
+                  <option value="difusionA">Difusión A</option>
+                  <option value="difusionB">Difusión B</option>
+                  <option value="difusionC">Difusión C</option>
+                  <option value="difusionD">Difusión D</option>
+                  <option value="difusionE">Difusión E</option>
+                </select>
+                <p className="text-[11px] opacity-60 mt-1">
+                  El SID y el Token se configuran en el backend. Acá solo elegís desde qué
+                  cuenta lanzar la campaña.
+                </p>
+              </div>
+            </div>   {/* 👈 ESTE CIERRE FALTABA */}
           
            <div className="flex-1">
             <label className="block text-sm mb-1">Cuenta de Twilio / Difusión</label>
